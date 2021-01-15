@@ -2,29 +2,42 @@ import numpy as np
 
 
 def ntu_tranform(raw_data):
+    # N C T V M
     transform_data = []
-    for cvtm in raw_data:
-        cvts = []
-        for cvt in cvtm.transpose((3, 0, 1, 2)):
-            cvts.append(ntu_tranform_skeleton(cvt))
-        transform_data.append(np.asarray(cvts).transpose((1, 2, 3, 0)))
+    for raw_ctvm in raw_data:
+        transform_mctv = []
+        for i in range(raw_ctvm.shape[3]):
+            transform_mctv.append(ntu_tranform_skeleton(raw_ctvm[:, :, :, i]))
+        transform_ctvm = np.asarray(transform_mctv).transpose((1, 2, 3, 0))
+        transform_data.append(transform_ctvm)
+        print(len(transform_data), '/', raw_data.shape[0])
+        if len(transform_ctvm[np.isnan(transform_ctvm)]) != 0:
+            print(len(transform_ctvm[np.isnan(transform_ctvm)]))
+            break
 
     return np.asarray(transform_data)
 
 
 def ntu_tranform_skeleton(test):
     """
-    :param test: frames of skeleton within a video sample
+    :param test: C T V
     """
+    t = 0
+    while test[:, t, :].all() == 0:
+        if t < test.shape[1]:
+            return test
+        else:
+            t += 1
+
     transform_test = []
 
-    d = test[:, 0, 0]
+    d = test[:, t, 0]
 
-    v1 = test[:, 0, 1] - d
+    v1 = test[:, t, 1] - d
 
     v1 = v1 / np.linalg.norm(v1)
 
-    v2_ = test[:, 0, 12] - test[:, 0, 16]  #
+    v2_ = test[:, t, 12] - test[:, t, 16]  #
     proj_v2_v1 = np.dot(v1.T, v2_) * v1 / np.linalg.norm(v1)
     v2 = v2_ - np.squeeze(proj_v2_v1)
     v2 = v2 / np.linalg.norm(v2)
@@ -40,16 +53,11 @@ def ntu_tranform_skeleton(test):
     for i in range(test.shape[1]):
         xyzs = []
         for j in range(test.shape[2]):
-            xyz = np.squeeze(np.matmul(np.linalg.inv(R), np.reshape(test[:, i, j] - d, (3, 1))))
-            xyzs.append(xyz)
+            xyzs.append(np.squeeze(np.matmul(np.linalg.inv(R), np.reshape(test[:, i, j] - d, (3, 1)))))
         transform_test.append(np.asarray(xyzs))
     return np.asarray(transform_test).transpose((2, 0, 1))
 
 
 if __name__ == '__main__':
-    # N C V T M
-    train_data = np.load("st-gcn/data/NTU-RGB-D/xsub/train_data.npy")
-    val_data = np.load("st-gcn/data/NTU-RGB-D/xsub/val_data.npy")
-
-    np.save("st-gcn/data/NTU-RGB-D/xsub/trans_train_data.npy", ntu_tranform(train_data))
-    np.save("st-gcn/data/NTU-RGB-D/xsub/trans_val_data.npy", ntu_tranform(val_data))
+    data = np.load("../data/NTU-RGB-D/xsub/val_data.npy")
+    np.save("../data/NTU-RGB-D/xsub/trans_val_data.npy", ntu_tranform(data))
