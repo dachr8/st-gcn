@@ -10,10 +10,9 @@ def ntu_tranform(raw_data):
             transform_mctv.append(ntu_tranform_skeleton(raw_ctvm[:, :, :, i]))
         transform_ctvm = np.asarray(transform_mctv).transpose((1, 2, 3, 0))
         transform_data.append(transform_ctvm)
-        print(len(transform_data), '/', raw_data.shape[0])
-        if len(transform_ctvm[np.isnan(transform_ctvm)]) != 0:
-            print(len(transform_ctvm[np.isnan(transform_ctvm)]))
-            break
+
+        if len(transform_data) % 50 == 0:
+            print(len(transform_data), '/', raw_data.shape[0])
 
     return np.asarray(transform_data)
 
@@ -59,5 +58,5 @@ def ntu_tranform_skeleton(test):
 
 
 if __name__ == '__main__':
-    data = np.load("../data/NTU-RGB-D/xsub/val_data.npy")
-    np.save("../data/NTU-RGB-D/xsub/trans_val_data.npy", ntu_tranform(data))
+    data = np.load("../data/NTU-RGB-D/xsub/train_data.npy")
+    np.save("../data/NTU-RGB-D/xsub/trans_train_data.npy", ntu_tranform(data))
