@@ -52,11 +52,16 @@ def ntu_tranform_skeleton(test):
     for i in range(test.shape[1]):
         xyzs = []
         for j in range(test.shape[2]):
-            xyzs.append(np.squeeze(np.matmul(np.linalg.inv(R), np.reshape(test[:, i, j] - d, (3, 1)))))
+            if test[:, i, j].all() == 0:
+                xyzs.append(test[:, i, j])
+            else:
+                xyzs.append(np.squeeze(np.matmul(np.linalg.inv(R), np.reshape(test[:, i, j] - d, (3, 1)))))
         transform_test.append(np.asarray(xyzs))
     return np.asarray(transform_test).transpose((2, 0, 1))
 
 
 if __name__ == '__main__':
     data = np.load("../data/NTU-RGB-D/xsub/train_data.npy")
-    np.save("../data/NTU-RGB-D/xsub/trans_train_data.npy", ntu_tranform(data))
+    trans_data = ntu_tranform(data)
+    np.save("../data/NTU-RGB-D/xsub/trans_train_data.npy", trans_data)
+    print("Done.")
