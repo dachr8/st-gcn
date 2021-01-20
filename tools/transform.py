@@ -1,13 +1,13 @@
 import numpy as np
 
 
-def ntu_tranform(raw_data):
+def ntu_transform(raw_data):
     # N C T V M
     transform_data = []
     for raw_ctvm in raw_data:
         transform_mctv = []
         for i in range(raw_ctvm.shape[3]):
-            transform_mctv.append(ntu_tranform_skeleton(raw_ctvm[:, :, :, i]))
+            transform_mctv.append(scaling_tranform(raw_ctvm[:, :, :, i]))
         transform_ctvm = np.asarray(transform_mctv).transpose((1, 2, 3, 0))
         transform_data.append(transform_ctvm)
 
@@ -17,7 +17,7 @@ def ntu_tranform(raw_data):
     return np.asarray(transform_data)
 
 
-def ntu_tranform_skeleton(test):
+def view_invariant_transform(test):
     """
     :param test: C T V
     """
@@ -60,8 +60,28 @@ def ntu_tranform_skeleton(test):
     return np.asarray(transform_test).transpose((2, 0, 1))
 
 
+def scaling_tranform(test):
+    """
+    :param test: C T V
+    """
+    t_nonzero = test[np.nonzero(test)]
+    if len(t_nonzero) == 0:
+        return test
+    t_max = np.max(t_nonzero)
+    t_min = np.min(t_nonzero)
+    transform_test = []
+    for i in range(test.shape[1]):
+        cvs = []
+        if test[:, i, :].max() == 0 and test[:, i, :].min() == 0:
+            cvs.append(test[:, i, :])
+        else:
+            cvs.append((test[:, i, :] - t_min) / (t_max - t_min))
+        transform_test.append(np.squeeze(np.asarray(cvs)))
+    return np.asarray(transform_test).transpose((1, 0, 2))
+
+
 if __name__ == '__main__':
-    data = np.load("../data/NTU-RGB-D/xsub/train_data.npy")
-    trans_data = ntu_tranform(data)
-    np.save("../data/NTU-RGB-D/xsub/trans_train_data.npy", trans_data)
+    data = np.load("../data/NTU-RGB-D/xsub/val_data.npy")
+    trans_data = ntu_transform(data)
+    np.save("../data/NTU-RGB-D/xsub/trans_val_data.npy", trans_data)
     print("Done.")
